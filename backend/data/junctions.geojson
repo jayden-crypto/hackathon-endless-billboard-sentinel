@@ -1,0 +1,18 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          76.364,
+          30.356
+        ]
+      },
+      "properties": {
+        "name": "Main Junction"
+      }
+    }
+  ]
+}

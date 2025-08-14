@@ -1,0 +1,6 @@
+
+# Example YOLOv8 data yaml
+nc: 1
+names: ['billboard']
+train: ../training/images/train
+val: ../training/images/val

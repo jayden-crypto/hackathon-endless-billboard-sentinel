@@ -1,0 +1,466 @@
+/* User Report Interface - Mobile-First Design */
+
+.user-report {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  min-height: 100vh;
+}
+
+/* Header */
+.report-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.report-header h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.report-header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Success Message */
+.success-message {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 20px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Camera Container */
+.camera-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: black;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+.camera-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.close-camera {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.close-camera:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.camera-video {
+  flex: 1;
+  width: 100%;
+  object-fit: cover;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+}
+
+/* Photo Section */
+.photo-section {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.photo-section h3 {
+  color: #1a202c;
+  margin-bottom: 15px;
+}
+
+.photo-preview {
+  margin-bottom: 15px;
+}
+
+.photo-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.photo-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* Report Form */
+.report-form {
+  background: #f8fafc;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.report-form h3 {
+  color: #1a202c;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+/* Photo Button Section */
+.photo-button-section {
+  text-align: center;
+  margin-bottom: 25px;
+  padding: 30px 20px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: white;
+}
+
+.photo-btn {
+  font-size: 1.2rem;
+  padding: 20px 30px;
+  margin-bottom: 15px;
+}
+
+.photo-hint {
+  color: #718096;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Location Input */
+.location-input {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.location-input input {
+  flex: 1;
+}
+
+.location-btn {
+  white-space: nowrap;
+  padding: 12px 16px;
+}
+
+/* Consent Group */
+.consent-group {
+  background: #f7fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #4a5568;
+}
+
+.consent-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  margin-top: 2px;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1.1rem;
+  margin-top: 20px;
+}
+
+.submit-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Instructions */
+.instructions {
+  background: #f8fafc;
+  padding: 25px;
+  border-radius: 16px;
+  border-left: 4px solid #667eea;
+}
+
+.instructions h3 {
+  color: #1a202c;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.instructions ol {
+  margin-bottom: 20px;
+  padding-left: 20px;
+}
+
+.instructions li {
+  margin-bottom: 8px;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.safety-tips {
+  background: #fff5f5;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #e53e3e;
+}
+
+.safety-tips h4 {
+  color: #c53030;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.safety-tips ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.safety-tips li {
+  color: #742a2a;
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+/* Buttons */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover:not(.disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-report {
+    padding: 15px;
+  }
+  
+  .report-header {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .report-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .report-form {
+    padding: 20px;
+  }
+  
+  .instructions {
+    padding: 20px;
+  }
+  
+  .location-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .location-btn {
+    width: 100%;
+  }
+  
+  .camera-controls {
+    flex-direction: column;
+  }
+  
+  .camera-controls .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-report {
+    padding: 10px;
+  }
+  
+  .report-header {
+    padding: 15px 10px;
+  }
+  
+  .report-form {
+    padding: 15px;
+  }
+  
+  .instructions {
+    padding: 15px;
+  }
+  
+  .btn {
+    padding: 15px 20px;
+    font-size: 1rem;
+  }
+}
+
+/* Loading States */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Smooth Transitions */
+.user-report * {
+  transition: all 0.2s ease;
+}
+
+/* Custom Scrollbar */
+.user-report::-webkit-scrollbar {
+  width: 6px;
+}
+
+.user-report::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.user-report::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 3px;
+}
+
+.user-report::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
