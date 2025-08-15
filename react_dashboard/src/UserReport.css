@@ -116,7 +116,7 @@
   object-fit: cover;
   background: #000;
   display: block;
-  transform: scaleX(-1); /* Mirror the video for selfie-like experience */
+  /* Removed mirroring - shows natural camera orientation */
 }
 
 .camera-controls {
@@ -147,6 +147,10 @@
   max-height: 300px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  /* Ensure captured photos show correct orientation */
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
 }
 
 .photo-actions {

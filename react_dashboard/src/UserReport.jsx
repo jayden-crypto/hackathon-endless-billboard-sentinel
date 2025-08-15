@@ -312,15 +312,20 @@ export default function UserReport() {
           canvas.height = video.videoHeight;
           const ctx = canvas.getContext('2d');
           
-          // Draw the video frame to canvas
-          ctx.drawImage(video, 0, 0);
+          // Clear canvas first
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
           
-          // Convert to blob
+          // Draw the video frame to canvas with proper orientation
+          // This ensures the captured image is not mirrored
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Convert to blob with high quality
           canvas.toBlob((blob) => {
             if (blob) {
               const imageUrl = URL.createObjectURL(blob);
               console.log('Photo captured successfully! Blob size:', blob.size, 'bytes');
               console.log('Image URL:', imageUrl);
+              console.log('Image dimensions:', canvas.width, 'x', canvas.height);
               
               // Set the captured image before closing camera
               setCapturedImage({ blob, url: imageUrl });
@@ -333,7 +338,7 @@ export default function UserReport() {
               console.error('Failed to create blob from canvas');
               alert('Failed to capture photo. Please try again.');
             }
-          }, 'image/jpeg', 0.8);
+          }, 'image/jpeg', 0.9); // Higher quality JPEG
         } catch (error) {
           console.error('Error capturing photo:', error);
           alert('Error capturing photo. Please try again.');
