@@ -21,33 +21,41 @@ export default function UserReport() {
 
   // Auto-initialize camera when component mounts
   useEffect(() => {
+    console.log('🚀 Component mounted, starting camera initialization...');
+    
     const initCamera = async () => {
+      console.log('⏳ Waiting for component to render...');
       // Wait a bit for the component to fully render
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
+      console.log('🔍 Checking camera support...');
       // Check if camera is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log('Camera not supported, skipping auto-init');
+        console.log('❌ Camera not supported, skipping auto-init');
+        setCameraError('Camera not supported in this browser');
         return;
       }
 
+      console.log('✅ Camera supported, checking permissions...');
       // Check if we have camera permissions
       try {
         const permissions = await navigator.permissions.query({ name: 'camera' });
+        console.log('📱 Camera permission state:', permissions.state);
+        
         if (permissions.state === 'granted') {
-          console.log('Camera permission already granted, auto-initializing...');
-          await openCamera(true); // true = silent mode
+          console.log('🎉 Camera permission already granted, camera ready!');
+          setCameraInitialized(true);
+          setCameraError('');
         } else if (permissions.state === 'prompt') {
-          console.log('Camera permission not yet requested, will prompt user later');
-          // Try to initialize anyway - user will be prompted
-          await openCamera(true);
+          console.log('🤔 Camera permission not yet requested, will prompt user later');
+          setCameraError('Click "Take Photo" to grant camera permission');
         } else {
-          console.log('Camera permission denied, user will need to manually enable');
+          console.log('❌ Camera permission denied, user will need to manually enable');
+          setCameraError('Camera permission denied - please enable in browser settings');
         }
       } catch (error) {
-        console.log('Could not check camera permissions, proceeding with manual init');
-        // Try to initialize anyway - permissions API might not be supported
-        await openCamera(true);
+        console.log('⚠️ Could not check camera permissions:', error);
+        setCameraError('Camera needs manual initialization - click "Take Photo"');
       }
     };
 
@@ -59,7 +67,9 @@ export default function UserReport() {
     if (cameraError && !cameraInitialized) {
       const retryTimer = setTimeout(() => {
         console.log('🔄 Auto-retrying camera initialization...');
-        openCamera(true);
+        // Clear error and try to initialize again
+        setCameraError('');
+        setCameraInitialized(false);
       }, 3000); // Retry after 3 seconds
 
       return () => clearTimeout(retryTimer);
