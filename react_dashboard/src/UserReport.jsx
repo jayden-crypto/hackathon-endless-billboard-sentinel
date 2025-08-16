@@ -19,47 +19,19 @@ export default function UserReport() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  // Auto-initialize camera when component mounts
+  // Simple camera check when component mounts
   useEffect(() => {
-    console.log('🚀 Component mounted, starting camera initialization...');
+    console.log('🚀 Component mounted, checking camera support...');
     
-    const initCamera = async () => {
-      console.log('⏳ Waiting for component to render...');
-      // Wait a bit for the component to fully render
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('🔍 Checking camera support...');
-      // Check if camera is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log('❌ Camera not supported, skipping auto-init');
-        setCameraError('Camera not supported in this browser');
-        return;
-      }
-
-      console.log('✅ Camera supported, checking permissions...');
-      // Check if we have camera permissions
-      try {
-        const permissions = await navigator.permissions.query({ name: 'camera' });
-        console.log('📱 Camera permission state:', permissions.state);
-        
-        if (permissions.state === 'granted') {
-          console.log('🎉 Camera permission already granted, camera ready!');
-          setCameraInitialized(true);
-          setCameraError('');
-        } else if (permissions.state === 'prompt') {
-          console.log('🤔 Camera permission not yet requested, will prompt user later');
-          setCameraError('Click "Take Photo" to grant camera permission');
-        } else {
-          console.log('❌ Camera permission denied, user will need to manually enable');
-          setCameraError('Camera permission denied - please enable in browser settings');
-        }
-      } catch (error) {
-        console.log('⚠️ Could not check camera permissions:', error);
-        setCameraError('Camera needs manual initialization - click "Take Photo"');
-      }
-    };
-
-    initCamera();
+    // Simple check for camera support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError('Camera not supported in this browser');
+      return;
+    }
+    
+    // Set camera as ready for initialization
+    setCameraInitialized(true);
+    console.log('✅ Camera support detected, ready for user interaction');
   }, []);
 
   // Auto-retry camera initialization if it fails
@@ -125,137 +97,63 @@ export default function UserReport() {
         return;
       }
 
-      // Request camera access with simpler constraints first
+      // Simplified constraints - start with basic video
       const constraints = {
-        video: {
-          facingMode: 'environment', // Use back camera
-          width: { ideal: 640, min: 320 },
-          height: { ideal: 480, min: 240 }
-        }
+        video: true
       };
 
-      console.log('Requesting camera access with constraints:', constraints);
+      console.log('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('✅ Camera access granted! Stream tracks:', stream.getTracks().map(t => t.kind));
+      console.log('✅ Camera access granted!');
       
       streamRef.current = stream;
       
       if (videoRef.current) {
         const video = videoRef.current;
-        console.log('Video element found, setting up...');
+        console.log('Setting up video element...');
         
-        // Clear any existing stream first
-        if (video.srcObject) {
-          console.log('Clearing existing srcObject');
-          video.srcObject = null;
-        }
-        
-        // Set up video event listeners first
-        const handleVideoReady = () => {
-          console.log('🎥 Video is ready! Dimensions:', video.videoWidth, 'x', video.videoHeight);
-          setIsCameraOpen(true);
-          setIsLoadingCamera(false);
-          setCameraInitialized(true);
-          setCameraError(''); // Clear any previous errors
-        };
-        
-        const handleVideoError = (error) => {
-          console.error('❌ Video error:', error);
-          if (!silent) {
-            setCameraError('Video failed to load');
-            setIsLoadingCamera(false);
-          }
-        };
-        
-        const handleVideoLoadStart = () => {
-          console.log('📹 Video load started');
-        };
-        
-        const handleVideoLoadedData = () => {
-          console.log('📹 Video data loaded');
-        };
-        
-        const handleVideoCanPlay = () => {
-          console.log('📹 Video can play');
-        };
-        
-        const handleVideoPlaying = () => {
-          console.log('📹 Video is playing');
-        };
-        
-        // Remove any existing listeners
-        video.removeEventListener('loadedmetadata', handleVideoReady);
-        video.removeEventListener('canplay', handleVideoReady);
-        video.removeEventListener('error', handleVideoError);
-        video.removeEventListener('loadstart', handleVideoLoadStart);
-        video.removeEventListener('loadeddata', handleVideoLoadedData);
-        video.removeEventListener('canplay', handleVideoCanPlay);
-        video.removeEventListener('playing', handleVideoPlaying);
-        
-        // Add new listeners
-        video.addEventListener('loadedmetadata', handleVideoReady);
-        video.addEventListener('canplay', handleVideoReady);
-        video.addEventListener('error', handleVideoError);
-        video.addEventListener('loadstart', handleVideoLoadStart);
-        video.addEventListener('loadeddata', handleVideoLoadedData);
-        video.addEventListener('canplay', handleVideoCanPlay);
-        video.addEventListener('playing', handleVideoPlaying);
-        
-        // Set the stream
-        console.log('Setting video srcObject...');
+        // Simple setup - just set the stream and play
         video.srcObject = stream;
         
-        // Try to play the video
-        console.log('Attempting to play video...');
-        try {
-          await video.play();
-          console.log('✅ Video play() successful on first try');
-          setIsCameraOpen(true);
-          setIsLoadingCamera(false);
-          setCameraInitialized(true);
-          setCameraError(''); // Clear any previous errors
-        } catch (playError) {
-          console.error('❌ Video play() failed:', playError);
-          // Don't give up - video might still work
-          console.log('Continuing anyway - video might still work...');
-        }
-        
-        // Fallback: if video doesn't load within 2 seconds, show interface anyway
-        setTimeout(() => {
-          if (!isCameraOpen && !silent) {
-            console.log('⏰ Fallback: showing camera interface after timeout');
-            setIsCameraOpen(true);
-            setIsLoadingCamera(false);
-            setCameraInitialized(true);
-          }
-        }, 2000);
-
-        // Additional fallback: check if video is actually working
-        const checkVideoReady = () => {
-          if (video.videoWidth > 0 && video.videoHeight > 0 && !silent) {
-            console.log('🎥 Video dimensions detected, camera is ready!');
+        // Set up a simple ready handler
+        const handleVideoReady = () => {
+          console.log('🎥 Video is ready!');
+          if (!silent) {
             setIsCameraOpen(true);
             setIsLoadingCamera(false);
             setCameraInitialized(true);
             setCameraError('');
           }
         };
-
-        // Check every 500ms for video readiness
-        const videoCheckInterval = setInterval(() => {
-          if (video.videoWidth > 0 && video.videoHeight > 0) {
-            clearInterval(videoCheckInterval);
-            checkVideoReady();
+        
+        // Use loadedmetadata as the primary ready event
+        video.addEventListener('loadedmetadata', handleVideoReady, { once: true });
+        
+        // Try to play the video
+        try {
+          await video.play();
+          console.log('✅ Video playing successfully');
+          // If play succeeds, we're ready
+          if (!silent) {
+            setIsCameraOpen(true);
+            setIsLoadingCamera(false);
+            setCameraInitialized(true);
+            setCameraError('');
           }
-        }, 500);
-
-        // Clear interval after 5 seconds to avoid memory leaks
-        setTimeout(() => clearInterval(videoCheckInterval), 5000);
+        } catch (playError) {
+          console.error('Video play failed:', playError);
+          // Still show the interface - user might need to interact first
+          if (!silent) {
+            setIsCameraOpen(true);
+            setIsLoadingCamera(false);
+            setCameraInitialized(true);
+          }
+        }
         
       } else {
         console.log('❌ Video element not found');
         if (!silent) {
-          setIsCameraOpen(true);
+          setCameraError('Video element not available');
           setIsLoadingCamera(false);
         }
       }
@@ -266,13 +164,11 @@ export default function UserReport() {
         setIsLoadingCamera(false);
         
         if (error.name === 'NotAllowedError') {
-          alert('Camera permission denied. Please allow camera access and try again.');
+          setCameraError('Camera permission denied. Please allow camera access.');
         } else if (error.name === 'NotFoundError') {
-          alert('No camera found on this device.');
+          setCameraError('No camera found on this device.');
         } else if (error.name === 'NotReadableError') {
-          alert('Camera is already in use by another application.');
-        } else {
-          alert(`Camera error: ${error.message}`);
+          setCameraError('Camera is already in use by another application.');
         }
       }
     }
