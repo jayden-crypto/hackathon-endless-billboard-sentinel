@@ -93,9 +93,13 @@ export default function UserReport() {
         return;
       }
 
-      // Simplified constraints - start with basic video
+      // Mobile-optimized constraints
       const constraints = {
-        video: true
+        video: {
+          facingMode: 'environment', // Use back camera on mobile
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 }
+        }
       };
 
       console.log('Requesting camera access...');
@@ -114,17 +118,38 @@ export default function UserReport() {
         const video = videoRef.current;
         console.log('Setting up video element...');
         
-        // Simple setup - just set the stream and play
-        video.srcObject = stream;
-        
-        // Try to play the video
-        try {
-          await video.play();
-          console.log('✅ Video playing successfully');
-        } catch (playError) {
-          console.error('Video play failed:', playError);
-          // Camera interface is already shown, video might work anyway
-        }
+        // Wait for camera interface to render, then set up video
+        setTimeout(async () => {
+          try {
+            // Clear any existing source
+            if (video.srcObject) {
+              video.srcObject = null;
+            }
+            
+            // Set the stream
+            video.srcObject = stream;
+            
+            // Set video properties for better mobile compatibility
+            video.setAttribute('playsinline', true);
+            video.setAttribute('webkit-playsinline', true);
+            video.muted = true;
+            video.autoplay = true;
+            
+            // Try to play the video
+            await video.play();
+            console.log('✅ Video playing successfully');
+          } catch (playError) {
+            console.error('Video play failed:', playError);
+            // Try alternative approach
+            try {
+              video.load();
+              await video.play();
+              console.log('✅ Video playing after reload');
+            } catch (retryError) {
+              console.error('Video retry failed:', retryError);
+            }
+          }
+        }, 100);
         
       } else {
         console.log('❌ Video element not found - but camera interface is shown');
@@ -388,6 +413,7 @@ export default function UserReport() {
             playsInline 
             muted
             className="camera-video"
+            style={{ width: '100%', height: 'auto', backgroundColor: '#000' }}
           />
           <div className="camera-controls">
             <button className="btn btn-primary" onClick={capturePhoto}>
