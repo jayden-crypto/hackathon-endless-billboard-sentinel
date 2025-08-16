@@ -1,4 +1,3 @@
-
 {
   "name": "billboard-dashboard",
   "version": "0.1.0",
@@ -9,9 +8,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "leaflet": "^1.9.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "leaflet": "^1.9.4"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"

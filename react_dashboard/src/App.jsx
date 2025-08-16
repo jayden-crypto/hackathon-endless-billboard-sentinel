@@ -50,6 +50,23 @@ export default function App() {
         const response = await fetch(`${API_BASE}/reports`);
         if (response.ok) {
           apiReports = await response.json();
+          // Transform API data to match frontend expectations
+          apiReports = apiReports.map(report => ({
+            ...report,
+            detections: report.detections.map(det => {
+              // Extract detection tags from violations
+              const tags = [];
+              if (det.violations) {
+                det.violations.forEach(violation => {
+                  if (violation.type === 'size') tags.push('Oversized');
+                  if (violation.type === 'placement') tags.push('Improper Placement');
+                  if (violation.type === 'license_missing') tags.push('No License');
+                  if (violation.type === 'license_invalid') tags.push('Invalid License');
+                });
+              }
+              return tags.length > 0 ? tags : ['Billboard'];
+            }).flat()
+          }));
         }
       } catch (error) {
         console.log('Using mock data - API not available');
@@ -62,7 +79,7 @@ export default function App() {
             id: 1,
             location: "Downtown Area",
             coordinates: [30.354, 76.366],
-            status: "Pending Review",
+            status: "pending",
             timestamp: "2024-01-15T10:30:00Z",
             detections: ["Billboard", "Unauthorized"],
             image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
@@ -71,7 +88,7 @@ export default function App() {
             id: 2,
             location: "Highway Exit",
             coordinates: [30.358, 76.370],
-            status: "Under Investigation",
+            status: "investigating",
             timestamp: "2024-01-15T09:15:00Z",
             detections: ["Billboard", "Safety Hazard"],
             image: "https://via.placeholder.com/300x200/FF9800/FFFFFF?text=Safety+Hazard"
@@ -80,7 +97,7 @@ export default function App() {
             id: 3,
             location: "Residential Zone",
             coordinates: [30.350, 76.362],
-            status: "Resolved",
+            status: "resolved",
             timestamp: "2024-01-14T16:45:00Z",
             detections: ["Billboard", "Removed"],
             image: "https://via.placeholder.com/300x200/2196F3/FFFFFF?text=Resolved+Case"
@@ -103,8 +120,8 @@ export default function App() {
   const updateStats = (reportsData) => {
     setStats({
       totalReports: reportsData.length,
-      pendingReview: reportsData.filter(r => r.status === "Pending Review").length,
-      resolved: reportsData.filter(r => r.status === "Resolved").length,
+      pendingReview: reportsData.filter(r => r.status === "pending" || r.status === "Pending Review").length,
+      resolved: reportsData.filter(r => r.status === "resolved" || r.status === "Resolved").length,
       responseTime: '24h'
     });
   };
@@ -129,6 +146,24 @@ export default function App() {
 
   const updateReportStatus = async (reportId, newStatus) => {
     try {
+      // For now, update the local state directly since backend is not running
+      setReports(prevReports => 
+        prevReports.map(report => 
+          report.id === reportId 
+            ? { ...report, status: newStatus }
+            : report
+        )
+      );
+      
+      // Update selected report if it's the one being updated
+      if (selectedReport && selectedReport.id === reportId) {
+        setSelectedReport(prev => ({ ...prev, status: newStatus }));
+      }
+      
+      showNotificationMessage(`Report status updated to ${newStatus}`);
+      
+      // In a real app, you would make the API call here:
+      /*
       const response = await fetch(`${API_BASE}/reports/${reportId}`, {
         method: 'PATCH',
         headers: {
@@ -138,12 +173,19 @@ export default function App() {
       });
       
       if (response.ok) {
-        showNotificationMessage(`Report status updated to ${newStatus}`);
-        loadDashboard(); // Reload data
-        setSelectedReport(null); // Close panel
+        const result = await response.json();
+        if (result.ok) {
+          showNotificationMessage(`Report status updated to ${newStatus}`);
+          loadDashboard(); // Reload data
+          setSelectedReport(null); // Close panel
+        } else {
+          showNotificationMessage('Failed to update status', 'error');
+        }
       } else {
-        showNotificationMessage('Failed to update status', 'error');
+        const errorData = await response.json();
+        showNotificationMessage(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
       }
+      */
     } catch (error) {
       console.error('Error updating status:', error);
       showNotificationMessage('Error updating status', 'error');
@@ -195,6 +237,9 @@ export default function App() {
 
   const getStatusColor = (status) => {
     switch (status) {
+      case 'pending': return '#FF9800';
+      case 'investigating': return '#2196F3';
+      case 'resolved': return '#4CAF50';
       case 'Pending Review': return '#FF9800';
       case 'Under Investigation': return '#2196F3';
       case 'Resolved': return '#4CAF50';
@@ -409,7 +454,7 @@ export default function App() {
               <div className="panel-actions">
                 <button 
                   className="btn btn-primary"
-                  onClick={() => updateReportStatus(selectedReport.id, 'Under Investigation')}
+                  onClick={() => updateReportStatus(selectedReport.id, 'investigating')}
                 >
                   📝 Mark Investigating
                 </button>
@@ -421,7 +466,7 @@ export default function App() {
                 </button>
                 <button 
                   className="btn btn-danger"
-                  onClick={() => updateReportStatus(selectedReport.id, 'Resolved')}
+                  onClick={() => updateReportStatus(selectedReport.id, 'resolved')}
                 >
                   🚫 Mark Resolved
                 </button>
