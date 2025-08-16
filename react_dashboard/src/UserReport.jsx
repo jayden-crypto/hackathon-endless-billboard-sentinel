@@ -75,10 +75,8 @@ export default function UserReport() {
 
   const openCamera = async (silent = false) => {
     try {
-      if (!silent) {
-        setCameraError('');
-        setIsLoadingCamera(true);
-      }
+      setCameraError('');
+      setIsLoadingCamera(true);
       console.log('=== STARTING CAMERA INITIALIZATION ===');
       
       // Check if camera is supported
@@ -89,11 +87,9 @@ export default function UserReport() {
       // Check if we already have a working stream
       if (streamRef.current && streamRef.current.active) {
         console.log('✅ Camera stream already active, reusing...');
-        if (!silent) {
-          setIsCameraOpen(true);
-          setIsLoadingCamera(false);
-          setCameraInitialized(true);
-        }
+        setIsCameraOpen(true);
+        setIsLoadingCamera(false);
+        setCameraInitialized(true);
         return;
       }
 
@@ -108,6 +104,12 @@ export default function UserReport() {
       
       streamRef.current = stream;
       
+      // Show camera interface immediately
+      setIsCameraOpen(true);
+      setIsLoadingCamera(false);
+      setCameraInitialized(true);
+      setCameraError('');
+      
       if (videoRef.current) {
         const video = videoRef.current;
         console.log('Setting up video element...');
@@ -115,61 +117,30 @@ export default function UserReport() {
         // Simple setup - just set the stream and play
         video.srcObject = stream;
         
-        // Set up a simple ready handler
-        const handleVideoReady = () => {
-          console.log('🎥 Video is ready!');
-          if (!silent) {
-            setIsCameraOpen(true);
-            setIsLoadingCamera(false);
-            setCameraInitialized(true);
-            setCameraError('');
-          }
-        };
-        
-        // Use loadedmetadata as the primary ready event
-        video.addEventListener('loadedmetadata', handleVideoReady, { once: true });
-        
         // Try to play the video
         try {
           await video.play();
           console.log('✅ Video playing successfully');
-          // If play succeeds, we're ready
-          if (!silent) {
-            setIsCameraOpen(true);
-            setIsLoadingCamera(false);
-            setCameraInitialized(true);
-            setCameraError('');
-          }
         } catch (playError) {
           console.error('Video play failed:', playError);
-          // Still show the interface - user might need to interact first
-          if (!silent) {
-            setIsCameraOpen(true);
-            setIsLoadingCamera(false);
-            setCameraInitialized(true);
-          }
+          // Camera interface is already shown, video might work anyway
         }
         
       } else {
-        console.log('❌ Video element not found');
-        if (!silent) {
-          setCameraError('Video element not available');
-          setIsLoadingCamera(false);
-        }
+        console.log('❌ Video element not found - but camera interface is shown');
       }
     } catch (error) {
       console.error('❌ Camera error:', error);
-      if (!silent) {
+      setIsLoadingCamera(false);
+      
+      if (error.name === 'NotAllowedError') {
+        setCameraError('Camera permission denied. Please allow camera access.');
+      } else if (error.name === 'NotFoundError') {
+        setCameraError('No camera found on this device.');
+      } else if (error.name === 'NotReadableError') {
+        setCameraError('Camera is already in use by another application.');
+      } else {
         setCameraError(`Camera error: ${error.message}`);
-        setIsLoadingCamera(false);
-        
-        if (error.name === 'NotAllowedError') {
-          setCameraError('Camera permission denied. Please allow camera access.');
-        } else if (error.name === 'NotFoundError') {
-          setCameraError('No camera found on this device.');
-        } else if (error.name === 'NotReadableError') {
-          setCameraError('Camera is already in use by another application.');
-        }
       }
     }
   };
