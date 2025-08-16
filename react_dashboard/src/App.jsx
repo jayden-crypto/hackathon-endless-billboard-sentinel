@@ -19,6 +19,7 @@ export default function App() {
   const [notificationMessage, setNotificationMessage] = useState('');
 
   const API_BASE = 'http://localhost:8000/api';
+  const IS_GITHUB_PAGES = window.location.hostname === 'jayden-crypto.github.io';
   
   useEffect(() => {
     checkApiConnection();
@@ -26,6 +27,11 @@ export default function App() {
   }, []);
 
   const checkApiConnection = async () => {
+    if (IS_GITHUB_PAGES) {
+      setApiStatus('github-pages');
+      return;
+    }
+    
     try {
       const response = await fetch(`http://localhost:8000/health`);
       if (response.ok) {
@@ -43,35 +49,37 @@ export default function App() {
     try {
       setLoading(true);
       
-      // Try to load real data from API
+      // Try to load real data from API (only if not on GitHub Pages)
       let apiReports = [];
-      try {
-        const response = await fetch(`${API_BASE}/reports`);
-        if (response.ok) {
-          apiReports = await response.json();
-          // Transform API data to match frontend expectations
-          apiReports = apiReports.map(report => ({
-            ...report,
-            detections: report.detections.map(det => {
-              // Extract detection tags from violations
-              const tags = [];
-              if (det.violations) {
-                det.violations.forEach(violation => {
-                  if (violation.type === 'size') tags.push('Oversized');
-                  if (violation.type === 'placement') tags.push('Improper Placement');
-                  if (violation.type === 'license_missing') tags.push('No License');
-                  if (violation.type === 'license_invalid') tags.push('Invalid License');
-                });
-              }
-              return tags.length > 0 ? tags : ['Billboard'];
-            }).flat()
-          }));
+      if (!IS_GITHUB_PAGES) {
+        try {
+          const response = await fetch(`${API_BASE}/reports`);
+          if (response.ok) {
+            apiReports = await response.json();
+            // Transform API data to match frontend expectations
+            apiReports = apiReports.map(report => ({
+              ...report,
+              detections: report.detections.map(det => {
+                // Extract detection tags from violations
+                const tags = [];
+                if (det.violations) {
+                  det.violations.forEach(violation => {
+                    if (violation.type === 'size') tags.push('Oversized');
+                    if (violation.type === 'placement') tags.push('Improper Placement');
+                    if (violation.type === 'license_missing') tags.push('No License');
+                    if (violation.type === 'license_invalid') tags.push('Invalid License');
+                  });
+                }
+                return tags.length > 0 ? tags : ['Billboard'];
+              }).flat()
+            }));
+          }
+        } catch (error) {
+          console.log('Using mock data - API not available:', error.message);
         }
-      } catch (error) {
-        console.log('Using mock data - API not available:', error.message);
       }
 
-      // If no API data, use mock data
+      // If no API data or on GitHub Pages, use mock data
       if (apiReports.length === 0) {
         apiReports = [
           {
@@ -144,6 +152,19 @@ export default function App() {
   };
 
   const updateReportStatus = async (reportId, newStatus) => {
+    // If on GitHub Pages, always update local state (no backend available)
+    if (IS_GITHUB_PAGES) {
+      const updatedReports = reports.map(report => 
+        report.id === reportId ? { ...report, status: newStatus } : report
+      );
+      setReports(updatedReports);
+      updateStats(updatedReports);
+      setSelectedReport(prev => prev ? { ...prev, status: newStatus } : null);
+      showNotificationMessage(`Report status updated to ${newStatus}`);
+      return;
+    }
+
+    // For localhost, try API first, fallback to local state
     try {
       const response = await fetch(`${API_BASE}/reports/${reportId}`, {
         method: 'PATCH',
@@ -320,7 +341,9 @@ export default function App() {
             </h1>
             <p className="app-subtitle">Smart Detection & Civic Reporting System</p>
             <div className="api-status">
-              API Status: <span className={`status-indicator ${apiStatus}`}>{apiStatus}</span>
+              API Status: <span className={`status-indicator ${apiStatus}`}>
+                {apiStatus === 'github-pages' ? 'demo mode' : apiStatus}
+              </span>
             </div>
           </div>
           <div className="header-actions">
