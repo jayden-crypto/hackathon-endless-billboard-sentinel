@@ -430,6 +430,45 @@ PlaysInline: ${debugInfo.playsInline}`);
     }
   };
 
+  // Simple camera function that bypasses React complexity
+  const trySimpleCamera = async () => {
+    try {
+      console.log('=== TRYING SIMPLE CAMERA ===');
+      
+      // Create a simple video element directly
+      const video = document.createElement('video');
+      video.style.width = '100%';
+      video.style.height = 'auto';
+      video.style.backgroundColor = '#000';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('autoplay', '');
+      video.muted = true;
+      
+      // Get basic video stream
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      
+      // Replace existing video or add to container
+      const videoContainer = document.querySelector('.camera-video');
+      if (videoContainer && videoContainer.parentNode) {
+        videoContainer.parentNode.replaceChild(video, videoContainer);
+        videoRef.current = video;
+      }
+      
+      await video.play();
+      console.log('✅ Simple camera working');
+      
+      // Update state
+      streamRef.current = stream;
+      setIsCameraOpen(true);
+      setCameraError('');
+      
+    } catch (error) {
+      console.error('Simple camera failed:', error);
+      setCameraError(`Simple camera failed: ${error.message}`);
+    }
+  };
+
   // Add debugging for capturedImage state
   useEffect(() => {
     console.log('capturedImage state changed:', capturedImage);
@@ -560,6 +599,14 @@ PlaysInline: ${debugInfo.playsInline}`);
               style={{ marginTop: '10px', fontSize: '0.8rem' }}
             >
               🔍 Debug Camera
+            </button>
+            
+            <button 
+              className="btn btn-warning" 
+              onClick={trySimpleCamera}
+              style={{ marginTop: '10px', fontSize: '0.8rem', marginLeft: '10px' }}
+            >
+              🎥 Try Simple Camera
             </button>
             
             {/* Alternative: File Upload */}
