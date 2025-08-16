@@ -24,6 +24,42 @@ export default function App() {
     : '/api';
   
   useEffect(() => {
+    // Load mock data immediately to show content
+    const mockData = [
+      {
+        id: 1,
+        location: "Downtown Area",
+        coordinates: [30.354, 76.366],
+        status: "pending",
+        timestamp: "2024-01-15T10:30:00Z",
+        detections: ["Billboard", "Unauthorized"],
+        image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
+      },
+      {
+        id: 2,
+        location: "Highway Exit",
+        coordinates: [30.358, 76.370],
+        status: "investigating",
+        timestamp: "2024-01-15T09:15:00Z",
+        detections: ["Billboard", "Safety Hazard"],
+        image: "https://via.placeholder.com/300x200/FF9800/FFFFFF?text=Safety+Hazard"
+      },
+      {
+        id: 3,
+        location: "Residential Zone",
+        coordinates: [30.350, 76.362],
+        status: "resolved",
+        timestamp: "2024-01-14T16:45:00Z",
+        detections: ["Billboard", "Removed"],
+        image: "https://via.placeholder.com/300x200/2196F3/FFFFFF?text=Resolved+Case"
+      }
+    ];
+    
+    setReports(mockData);
+    updateStats(mockData);
+    setLoading(false);
+    
+    // Then try to load real data in background
     checkApiConnection();
     loadDashboard();
   }, []);
@@ -300,12 +336,12 @@ export default function App() {
     </nav>
   );
 
-  if (loading && currentView === 'dashboard') {
+  if (loading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <h2>Loading Billboard Sentinel Dashboard...</h2>
-        <p>API Status: {apiStatus}</p>
+        <h2>🚨 Loading Billboard Sentinel...</h2>
+        <p>Please wait while we initialize the dashboard</p>
       </div>
     );
   }
