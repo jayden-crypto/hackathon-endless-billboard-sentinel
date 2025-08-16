@@ -170,10 +170,27 @@ export default function UserReport() {
             // Double check video is actually showing content
             setTimeout(() => {
               if (video.videoWidth === 0 || video.videoHeight === 0) {
-                console.log('⚠️ Video dimensions are 0, trying to reload...');
-                video.load();
+                console.log('⚠️ Video dimensions are 0, trying alternative approach...');
+                
+                // Try creating a new video element
+                const newVideo = document.createElement('video');
+                newVideo.srcObject = stream;
+                newVideo.setAttribute('playsinline', '');
+                newVideo.setAttribute('webkit-playsinline', '');
+                newVideo.muted = true;
+                newVideo.autoplay = true;
+                newVideo.style.width = '100%';
+                newVideo.style.height = 'auto';
+                newVideo.style.objectFit = 'cover';
+                
+                // Replace the existing video
+                if (video.parentNode) {
+                  video.parentNode.replaceChild(newVideo, video);
+                  videoRef.current = newVideo;
+                  newVideo.play().catch(e => console.log('New video play failed:', e));
+                }
               }
-            }, 500);
+            }, 1000);
             
           } catch (playError) {
             console.error('Video play failed:', playError);
@@ -371,27 +388,45 @@ export default function UserReport() {
     
     if (videoRef.current) {
       const video = videoRef.current;
-      console.log('Video element state:', {
+      const debugInfo = {
         readyState: video.readyState,
         videoWidth: video.videoWidth,
         videoHeight: video.videoHeight,
         paused: video.paused,
         ended: video.ended,
         srcObject: video.srcObject ? 'Set' : 'Not set',
-        currentSrc: video.currentSrc
-      });
+        currentSrc: video.currentSrc,
+        muted: video.muted,
+        autoplay: video.autoplay,
+        playsInline: video.playsInline
+      };
+      console.log('Video element state:', debugInfo);
+      
+      // Show debug info to user
+      alert(`Camera Debug Info:
+Video Ready State: ${debugInfo.readyState} (4=loaded)
+Video Dimensions: ${debugInfo.videoWidth}x${debugInfo.videoHeight}
+Stream: ${debugInfo.srcObject}
+Paused: ${debugInfo.paused}
+Muted: ${debugInfo.muted}
+PlaysInline: ${debugInfo.playsInline}`);
     } else {
       console.log('Video element not found');
+      alert('Video element not found');
     }
     
     if (streamRef.current) {
-      console.log('Stream tracks:', streamRef.current.getTracks().map(t => ({
+      const tracks = streamRef.current.getTracks().map(t => ({
         kind: t.kind,
         enabled: t.enabled,
-        readyState: t.readyState
-      })));
+        readyState: t.readyState,
+        label: t.label
+      }));
+      console.log('Stream tracks:', tracks);
+      alert(`Stream tracks: ${tracks.length} found\n${tracks.map(t => `${t.kind}: ${t.readyState} (${t.label})`).join('\n')}`);
     } else {
       console.log('No stream reference');
+      alert('No stream reference found');
     }
   };
 
@@ -526,6 +561,25 @@ export default function UserReport() {
             >
               🔍 Debug Camera
             </button>
+            
+            {/* Alternative: File Upload */}
+            <div style={{ marginTop: '15px', padding: '10px', border: '1px dashed #ccc', borderRadius: '5px' }}>
+              <p style={{ fontSize: '0.9rem', margin: '0 0 10px 0' }}>📷 Camera not working? Upload a photo instead:</p>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const url = URL.createObjectURL(file);
+                    setCapturedImage({ blob: file, url: url });
+                    console.log('Photo uploaded via file input');
+                  }
+                }}
+                style={{ width: '100%' }}
+              />
+            </div>
             <p className="photo-hint">Take a clear photo showing the unauthorized billboard</p>
             <p className="photo-hint">Make sure to allow camera permissions when prompted</p>
           </div>
