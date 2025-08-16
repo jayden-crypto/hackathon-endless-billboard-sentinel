@@ -93,18 +93,39 @@ export default function UserReport() {
         return;
       }
 
-      // Mobile-optimized constraints
-      const constraints = {
-        video: {
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 }
-        }
-      };
+      // Progressive fallback constraints - try from most specific to most basic
+      const constraintOptions = [
+        // Try back camera first
+        { video: { facingMode: 'environment' } },
+        // Try front camera
+        { video: { facingMode: 'user' } },
+        // Try any camera with basic constraints
+        { video: { width: { ideal: 640 }, height: { ideal: 480 } } },
+        // Most basic - just video
+        { video: true }
+      ];
 
-      console.log('Requesting camera access...');
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('✅ Camera access granted!');
+      let stream = null;
+      let lastError = null;
+
+      for (let i = 0; i < constraintOptions.length; i++) {
+        try {
+          console.log(`Trying camera constraints ${i + 1}/${constraintOptions.length}:`, constraintOptions[i]);
+          stream = await navigator.mediaDevices.getUserMedia(constraintOptions[i]);
+          console.log('✅ Camera access granted with constraints:', constraintOptions[i]);
+          break;
+        } catch (error) {
+          console.log(`❌ Constraints ${i + 1} failed:`, error.message);
+          lastError = error;
+          if (i === constraintOptions.length - 1) {
+            throw error;
+          }
+        }
+      }
+
+      if (!stream) {
+        throw lastError || new Error('Failed to get camera stream');
+      }
       
       streamRef.current = stream;
       
@@ -123,21 +144,37 @@ export default function UserReport() {
           try {
             // Clear any existing source
             if (video.srcObject) {
+              const oldTracks = video.srcObject.getTracks();
+              oldTracks.forEach(track => track.stop());
               video.srcObject = null;
             }
             
             // Set the stream
             video.srcObject = stream;
             
-            // Set video properties for better mobile compatibility
-            video.setAttribute('playsinline', true);
-            video.setAttribute('webkit-playsinline', true);
+            // Set video properties for better compatibility
+            video.setAttribute('playsinline', '');
+            video.setAttribute('webkit-playsinline', '');
             video.muted = true;
             video.autoplay = true;
+            
+            // Force video dimensions
+            video.style.width = '100%';
+            video.style.height = 'auto';
+            video.style.objectFit = 'cover';
             
             // Try to play the video
             await video.play();
             console.log('✅ Video playing successfully');
+            
+            // Double check video is actually showing content
+            setTimeout(() => {
+              if (video.videoWidth === 0 || video.videoHeight === 0) {
+                console.log('⚠️ Video dimensions are 0, trying to reload...');
+                video.load();
+              }
+            }, 500);
+            
           } catch (playError) {
             console.error('Video play failed:', playError);
             // Try alternative approach
@@ -147,9 +184,10 @@ export default function UserReport() {
               console.log('✅ Video playing after reload');
             } catch (retryError) {
               console.error('Video retry failed:', retryError);
+              // Still show interface, user can try capture
             }
           }
-        }, 100);
+        }, 200);
         
       } else {
         console.log('❌ Video element not found - but camera interface is shown');
@@ -159,7 +197,7 @@ export default function UserReport() {
       setIsLoadingCamera(false);
       
       if (error.name === 'NotAllowedError') {
-        setCameraError('Camera permission denied. Please allow camera access.');
+        setCameraError('Camera permission denied. Please allow camera access and try again.');
       } else if (error.name === 'NotFoundError') {
         setCameraError('No camera found on this device.');
       } else if (error.name === 'NotReadableError') {
