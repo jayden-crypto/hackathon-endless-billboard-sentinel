@@ -18,8 +18,10 @@ export default function App() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
-  // API Base URL - change this to your deployed backend
-  const API_BASE = 'http://localhost:8000/api';
+  // API Base URL - use relative URL for production, localhost for development
+  const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000/api' 
+    : '/api';
   
   useEffect(() => {
     checkApiConnection();
@@ -69,7 +71,7 @@ export default function App() {
           }));
         }
       } catch (error) {
-        console.log('Using mock data - API not available');
+        console.log('Using mock data - API not available:', error.message);
       }
 
       // If no API data, use mock data
@@ -113,6 +115,22 @@ export default function App() {
     } catch (error) {
       console.error('Error loading dashboard:', error);
       setLoading(false);
+      // Ensure we always have some data to show
+      if (reports.length === 0) {
+        const fallbackReports = [
+          {
+            id: 1,
+            location: "Downtown Area",
+            coordinates: [30.354, 76.366],
+            status: "pending",
+            timestamp: "2024-01-15T10:30:00Z",
+            detections: ["Billboard", "Unauthorized"],
+            image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
+          }
+        ];
+        setReports(fallbackReports);
+        updateStats(fallbackReports);
+      }
       showNotificationMessage('Error loading dashboard', 'error');
     }
   };
