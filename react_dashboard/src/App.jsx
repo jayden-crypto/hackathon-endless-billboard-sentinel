@@ -18,48 +18,9 @@ export default function App() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
-  // API Base URL - use relative URL for production, localhost for development
-  const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000/api' 
-    : '/api';
+  const API_BASE = 'http://localhost:8000/api';
   
   useEffect(() => {
-    // Load mock data immediately to show content
-    const mockData = [
-      {
-        id: 1,
-        location: "Downtown Area",
-        coordinates: [30.354, 76.366],
-        status: "pending",
-        timestamp: "2024-01-15T10:30:00Z",
-        detections: ["Billboard", "Unauthorized"],
-        image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
-      },
-      {
-        id: 2,
-        location: "Highway Exit",
-        coordinates: [30.358, 76.370],
-        status: "investigating",
-        timestamp: "2024-01-15T09:15:00Z",
-        detections: ["Billboard", "Safety Hazard"],
-        image: "https://via.placeholder.com/300x200/FF9800/FFFFFF?text=Safety+Hazard"
-      },
-      {
-        id: 3,
-        location: "Residential Zone",
-        coordinates: [30.350, 76.362],
-        status: "resolved",
-        timestamp: "2024-01-14T16:45:00Z",
-        detections: ["Billboard", "Removed"],
-        image: "https://via.placeholder.com/300x200/2196F3/FFFFFF?text=Resolved+Case"
-      }
-    ];
-    
-    setReports(mockData);
-    updateStats(mockData);
-    setLoading(false);
-    
-    // Then try to load real data in background
     checkApiConnection();
     loadDashboard();
   }, []);
@@ -117,7 +78,7 @@ export default function App() {
             id: 1,
             location: "Downtown Area",
             coordinates: [30.354, 76.366],
-            status: "pending",
+            status: "Pending Review",
             timestamp: "2024-01-15T10:30:00Z",
             detections: ["Billboard", "Unauthorized"],
             image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
@@ -126,7 +87,7 @@ export default function App() {
             id: 2,
             location: "Highway Exit",
             coordinates: [30.358, 76.370],
-            status: "investigating",
+            status: "Under Investigation",
             timestamp: "2024-01-15T09:15:00Z",
             detections: ["Billboard", "Safety Hazard"],
             image: "https://via.placeholder.com/300x200/FF9800/FFFFFF?text=Safety+Hazard"
@@ -135,7 +96,7 @@ export default function App() {
             id: 3,
             location: "Residential Zone",
             coordinates: [30.350, 76.362],
-            status: "resolved",
+            status: "Resolved",
             timestamp: "2024-01-14T16:45:00Z",
             detections: ["Billboard", "Removed"],
             image: "https://via.placeholder.com/300x200/2196F3/FFFFFF?text=Resolved+Case"
@@ -151,22 +112,6 @@ export default function App() {
     } catch (error) {
       console.error('Error loading dashboard:', error);
       setLoading(false);
-      // Ensure we always have some data to show
-      if (reports.length === 0) {
-        const fallbackReports = [
-          {
-            id: 1,
-            location: "Downtown Area",
-            coordinates: [30.354, 76.366],
-            status: "pending",
-            timestamp: "2024-01-15T10:30:00Z",
-            detections: ["Billboard", "Unauthorized"],
-            image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
-          }
-        ];
-        setReports(fallbackReports);
-        updateStats(fallbackReports);
-      }
       showNotificationMessage('Error loading dashboard', 'error');
     }
   };
@@ -174,8 +119,8 @@ export default function App() {
   const updateStats = (reportsData) => {
     setStats({
       totalReports: reportsData.length,
-      pendingReview: reportsData.filter(r => r.status === "pending" || r.status === "Pending Review").length,
-      resolved: reportsData.filter(r => r.status === "resolved" || r.status === "Resolved").length,
+      pendingReview: reportsData.filter(r => r.status === "Pending Review").length,
+      resolved: reportsData.filter(r => r.status === "Resolved").length,
       responseTime: '24h'
     });
   };
@@ -200,24 +145,6 @@ export default function App() {
 
   const updateReportStatus = async (reportId, newStatus) => {
     try {
-      // For now, update the local state directly since backend is not running
-      setReports(prevReports => 
-        prevReports.map(report => 
-          report.id === reportId 
-            ? { ...report, status: newStatus }
-            : report
-        )
-      );
-      
-      // Update selected report if it's the one being updated
-      if (selectedReport && selectedReport.id === reportId) {
-        setSelectedReport(prev => ({ ...prev, status: newStatus }));
-      }
-      
-      showNotificationMessage(`Report status updated to ${newStatus}`);
-      
-      // In a real app, you would make the API call here:
-      /*
       const response = await fetch(`${API_BASE}/reports/${reportId}`, {
         method: 'PATCH',
         headers: {
@@ -239,7 +166,6 @@ export default function App() {
         const errorData = await response.json();
         showNotificationMessage(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
       }
-      */
     } catch (error) {
       console.error('Error updating status:', error);
       showNotificationMessage('Error updating status', 'error');
@@ -291,9 +217,6 @@ export default function App() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return '#FF9800';
-      case 'investigating': return '#2196F3';
-      case 'resolved': return '#4CAF50';
       case 'Pending Review': return '#FF9800';
       case 'Under Investigation': return '#2196F3';
       case 'Resolved': return '#4CAF50';
@@ -508,7 +431,7 @@ export default function App() {
               <div className="panel-actions">
                 <button 
                   className="btn btn-primary"
-                  onClick={() => updateReportStatus(selectedReport.id, 'investigating')}
+                  onClick={() => updateReportStatus(selectedReport.id, 'Under Investigation')}
                 >
                   📝 Mark Investigating
                 </button>
@@ -520,7 +443,7 @@ export default function App() {
                 </button>
                 <button 
                   className="btn btn-danger"
-                  onClick={() => updateReportStatus(selectedReport.id, 'resolved')}
+                  onClick={() => updateReportStatus(selectedReport.id, 'Resolved')}
                 >
                   🚫 Mark Resolved
                 </button>
