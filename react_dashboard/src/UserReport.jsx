@@ -12,12 +12,16 @@ export default function UserReport() {
     consent: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [cameraError, setCameraError] = useState('');
-  const [photoCaptured, setPhotoCaptured] = useState(false);
   const [cameraInitialized, setCameraInitialized] = useState(false);
+  const [photoCaptured, setPhotoCaptured] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Refs
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Simple camera check when component mounts
   useEffect(() => {
@@ -430,6 +434,35 @@ PlaysInline: ${debugInfo.playsInline}`);
     }
   };
 
+  // Handle file upload from hidden input
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setCapturedImage({ blob: file, url: url });
+      setPhotoCaptured(true);
+      console.log('Photo uploaded via file input');
+    }
+  };
+
+  // Main photo button handler - tries camera first, falls back to file input
+  const handleTakePhoto = async () => {
+    try {
+      console.log('=== TAKE PHOTO BUTTON PRESSED ===');
+      
+      // First try to open camera
+      await openCamera();
+      
+    } catch (error) {
+      console.log('Camera failed, falling back to file input:', error);
+      
+      // If camera fails, trigger file input instead
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }
+  };
+
   // Simple camera function that bypasses React complexity
   const trySimpleCamera = async () => {
     try {
@@ -565,12 +598,21 @@ PlaysInline: ${debugInfo.playsInline}`);
           <div className="photo-button-section">
             <button 
               className={`btn btn-primary photo-btn ${isLoadingCamera ? 'loading' : ''}`} 
-              onClick={openCamera}
+              onClick={handleTakePhoto}
               disabled={isLoadingCamera}
             >
-              {isLoadingCamera ? '📸 Loading Camera...' : 
-               cameraInitialized ? '📸 Take Photo of Billboard' : '📸 Initialize Camera'}
+              {isLoadingCamera ? '📸 Loading Camera...' : '📸 Take Photo of Billboard'}
             </button>
+            
+            {/* Hidden file input for fallback */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
             
             {cameraError && (
               <div className="camera-error-info">
@@ -609,24 +651,6 @@ PlaysInline: ${debugInfo.playsInline}`);
               🎥 Try Simple Camera
             </button>
             
-            {/* Alternative: File Upload */}
-            <div style={{ marginTop: '15px', padding: '10px', border: '1px dashed #ccc', borderRadius: '5px' }}>
-              <p style={{ fontSize: '0.9rem', margin: '0 0 10px 0' }}>📷 Camera not working? Upload a photo instead:</p>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const url = URL.createObjectURL(file);
-                    setCapturedImage({ blob: file, url: url });
-                    console.log('Photo uploaded via file input');
-                  }
-                }}
-                style={{ width: '100%' }}
-              />
-            </div>
             <p className="photo-hint">Take a clear photo showing the unauthorized billboard</p>
             <p className="photo-hint">Make sure to allow camera permissions when prompted</p>
           </div>
