@@ -27,7 +27,7 @@ export default function App() {
 
   const checkApiConnection = async () => {
     try {
-      const response = await fetch(`${API_BASE}/health`);
+      const response = await fetch(`http://localhost:8000/health`);
       if (response.ok) {
         setApiStatus('connected');
       } else {
@@ -159,12 +159,32 @@ export default function App() {
           showNotificationMessage(`Report status updated to ${newStatus}`);
           loadDashboard(); // Reload data
           setSelectedReport(null); // Close panel
+        } else if (result.error === 'Report not found') {
+          // Handle mock data - update local state
+          const updatedReports = reports.map(report => 
+            report.id === reportId ? { ...report, status: newStatus } : report
+          );
+          setReports(updatedReports);
+          updateStats(updatedReports);
+          setSelectedReport(prev => prev ? { ...prev, status: newStatus } : null);
+          showNotificationMessage(`Report status updated to ${newStatus}`);
         } else {
           showNotificationMessage('Failed to update status', 'error');
         }
       } else {
         const errorData = await response.json();
-        showNotificationMessage(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
+        if (errorData.error === 'Report not found') {
+          // Handle mock data - update local state
+          const updatedReports = reports.map(report => 
+            report.id === reportId ? { ...report, status: newStatus } : report
+          );
+          setReports(updatedReports);
+          updateStats(updatedReports);
+          setSelectedReport(prev => prev ? { ...prev, status: newStatus } : null);
+          showNotificationMessage(`Report status updated to ${newStatus}`);
+        } else {
+          showNotificationMessage(`Failed to update status: ${errorData.error || 'Unknown error'}`, 'error');
+        }
       }
     } catch (error) {
       console.error('Error updating status:', error);
