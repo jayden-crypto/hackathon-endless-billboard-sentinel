@@ -360,13 +360,37 @@ export default function UserReport() {
         setPhotoCaptured(true);
         
       } else {
-        // Real API call for localhost
+        // Real API call for localhost - format data for backend API
         const formData = new FormData();
         formData.append('image', capturedImage.blob, 'billboard-detection.jpg');
-        formData.append('description', reportData.description);
-        formData.append('location', reportData.location);
-        formData.append('urgency', reportData.urgency);
-        formData.append('timestamp', new Date().toISOString());
+        
+        // Parse location coordinates or use default
+        let lat = 30.354, lon = 76.366; // Default coordinates
+        if (reportData.location && reportData.location.includes(',')) {
+          const coords = reportData.location.split(',').map(c => parseFloat(c.trim()));
+          if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+            lat = coords[0];
+            lon = coords[1];
+          }
+        }
+        
+        formData.append('lat', lat.toString());
+        formData.append('lon', lon.toString());
+        formData.append('device_heading', '0.0');
+        
+        // Create mock detection data for the backend
+        const detections = [{
+          bbox: [0.1, 0.1, 0.9, 0.9],
+          corners: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.9], [0.1, 0.9]],
+          est_width_m: 10.0,
+          est_height_m: 3.0,
+          confidence: 0.85,
+          qr_text: '',
+          ocr_text: reportData.description || 'Billboard detected',
+          license_id: ''
+        }];
+        
+        formData.append('detections_json', JSON.stringify(detections));
         
         const response = await fetch('http://localhost:8000/api/reports', {
           method: 'POST',
@@ -374,10 +398,18 @@ export default function UserReport() {
         });
 
         if (response.ok) {
+          const result = await response.json();
+          console.log('Report submitted successfully:', result);
           setShowSuccess(true);
           setPhotoCaptured(true);
+          
+          // Notify parent component to refresh dashboard
+          if (window.refreshDashboard) {
+            window.refreshDashboard();
+          }
         } else {
-          throw new Error('Failed to submit report to backend');
+          const errorText = await response.text();
+          throw new Error(`Backend error: ${errorText}`);
         }
       }
       

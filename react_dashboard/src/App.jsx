@@ -24,6 +24,16 @@ export default function App() {
   useEffect(() => {
     checkApiConnection();
     loadDashboard();
+    
+    // Set up global refresh function for report submissions
+    window.refreshDashboard = () => {
+      console.log('Refreshing dashboard after report submission...');
+      loadDashboard();
+    };
+    
+    return () => {
+      delete window.refreshDashboard;
+    };
   }, []);
 
   const checkApiConnection = async () => {
@@ -56,13 +66,16 @@ export default function App() {
           const response = await fetch(`${API_BASE}/reports`);
           if (response.ok) {
             apiReports = await response.json();
+            console.log('Loaded reports from API:', apiReports);
+            
             // Transform API data to match frontend expectations
             apiReports = apiReports.map(report => ({
               ...report,
-              detections: report.detections.map(det => {
+              status: report.status || 'Pending Review',
+              detections: report.detections ? report.detections.map(det => {
                 // Extract detection tags from violations
                 const tags = [];
-                if (det.violations) {
+                if (det.violations && det.violations.length > 0) {
                   det.violations.forEach(violation => {
                     if (violation.type === 'size') tags.push('Oversized');
                     if (violation.type === 'placement') tags.push('Improper Placement');
@@ -71,7 +84,7 @@ export default function App() {
                   });
                 }
                 return tags.length > 0 ? tags : ['Billboard'];
-              }).flat()
+              }).flat() : ['Billboard']
             }));
           }
         } catch (error) {
