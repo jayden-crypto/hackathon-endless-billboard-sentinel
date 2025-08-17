@@ -69,23 +69,31 @@ export default function App() {
             console.log('Loaded reports from API:', apiReports);
             
             // Transform API data to match frontend expectations
-            apiReports = apiReports.map(report => ({
-              ...report,
-              status: report.status || 'Pending Review',
-              detections: report.detections ? report.detections.map(det => {
-                // Extract detection tags from violations
-                const tags = [];
-                if (det.violations && det.violations.length > 0) {
-                  det.violations.forEach(violation => {
-                    if (violation.type === 'size') tags.push('Oversized');
-                    if (violation.type === 'placement') tags.push('Improper Placement');
-                    if (violation.type === 'license_missing') tags.push('No License');
-                    if (violation.type === 'license_invalid') tags.push('Invalid License');
-                  });
-                }
-                return tags.length > 0 ? tags : ['Billboard'];
-              }).flat() : ['Billboard']
-            }));
+            apiReports = apiReports.map(report => {
+              // Extract detection tags from violations
+              const tags = [];
+              if (report.detections && report.detections.length > 0) {
+                report.detections.forEach(det => {
+                  if (det.violations && det.violations.length > 0) {
+                    det.violations.forEach(violation => {
+                      if (violation.type === 'size') tags.push('Oversized');
+                      if (violation.type === 'placement') tags.push('Improper Placement');
+                      if (violation.type === 'license_missing') tags.push('No License');
+                      if (violation.type === 'license_invalid') tags.push('Invalid License');
+                    });
+                  }
+                });
+              }
+              
+              return {
+                ...report,
+                status: report.status === 'pending' ? 'Pending Review' : 
+                        report.status === 'investigating' ? 'Under Investigation' : 
+                        report.status === 'resolved' ? 'Resolved' : report.status,
+                detections: tags.length > 0 ? tags : ['Billboard'],
+                image: report.image || "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
+              };
+            });
           }
         } catch (error) {
           console.log('Using mock data - API not available:', error.message);
