@@ -29,6 +29,8 @@ class Report(Base):
     device_heading = Column(Float, nullable=True)
     model_version = Column(String, default="ondevice-0.1")
     status = Column(String, default="pending")
+    archived = Column(String, default="false")  # "false", "true", "auto"
+    archived_at = Column(DateTime, nullable=True)
 class Detection(Base):
     __tablename__ = "detection"
     id = Column(String, primary_key=True)

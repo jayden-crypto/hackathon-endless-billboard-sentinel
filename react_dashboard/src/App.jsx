@@ -91,7 +91,9 @@ export default function App() {
                         report.status === 'investigating' ? 'Under Investigation' : 
                         report.status === 'resolved' ? 'Resolved' : report.status,
                 detections: tags.length > 0 ? tags : ['Billboard'],
-                image: report.image || "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
+                image: report.image || "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection",
+                archived: report.archived || 'false',
+                archived_at: report.archived_at
               };
             });
           }
@@ -421,8 +423,9 @@ export default function App() {
           <div className="reports-grid">
             {reports.map((report) => (
               <div 
-                key={report.id} 
+                key={report.id}
                 className={`report-card ${selectedReport?.id === report.id ? 'selected' : ''}`}
+                data-archived={report.archived}
                 onClick={() => setSelectedReport(report)}
               >
                 <div className="report-image">
@@ -435,18 +438,16 @@ export default function App() {
                   </div>
                 </div>
                 <div className="report-details">
-                  <h3>{report.location}</h3>
-                  <p className="timestamp">🕒 {formatDate(report.timestamp)}</p>
+                  <h3>
+                    {report.location}
+                    {report.archived === 'true' && <span className="archived-badge">📁 Archived</span>}
+                  </h3>
+                  <p className="timestamp">{new Date(report.timestamp).toLocaleString()}</p>
                   <div className="detections">
-                    {report.detections.map((detection, index) => (
-                      <span key={index} className="detection-tag">
-                        {detection}
-                      </span>
+                    {report.detections.map((detection, idx) => (
+                      <span key={idx} className="detection-tag">{detection}</span>
                     ))}
                   </div>
-                  <p className="coordinates">
-                    📍 {report.coordinates[0].toFixed(4)}, {report.coordinates[1].toFixed(4)}
-                  </p>
                 </div>
               </div>
             ))}

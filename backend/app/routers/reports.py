@@ -77,7 +77,11 @@ def get_report(report_id: str):
 @router.get("/reports")
 def get_all_reports():
     db = SessionLocal()
-    reports = db.query(models.Report).all()
+    # Sort reports: active first, then archived (by priority)
+    reports = db.query(models.Report).order_by(
+        models.Report.archived.asc(),  # false first, then true
+        models.Report.captured_at.desc()  # newest first within each group
+    ).all()
     out = []
     for report in reports:
         # Get detections for this report
@@ -101,7 +105,9 @@ def get_all_reports():
             'status': report.status,
             'timestamp': report.captured_at.isoformat(),
             'detections': detection_data,
-            'image': f"/static/uploads/{report.img_uri.split('/')[-1]}" if report.img_uri else "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
+            'image': f"/static/uploads/{report.img_uri.split('/')[-1]}" if report.img_uri else "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection",
+            'archived': report.archived,
+            'archived_at': report.archived_at.isoformat() if report.archived_at else None
         })
     return out
 
@@ -123,8 +129,33 @@ def update_report_status(report_id: str, status_update: dict):
     
     # Update the status
     if "status" in status_update:
+        old_status = report.status
         report.status = status_update["status"]
+        
+        # Auto-archive resolved reports after 30 days (soft delete)
+        if status_update["status"] == "resolved" and old_status != "resolved":
+            from datetime import datetime, timedelta
+            # Mark for auto-archival in 30 days
+            report.archived = "auto"
+            # For demo purposes, archive immediately if requested
+            if status_update.get("archive_now"):
+                report.archived = "true"
+                report.archived_at = datetime.utcnow()
+        
         db.commit()
-        return {"ok": True, "status": report.status}
+        return {"ok": True, "status": report.status, "archived": report.archived}
     
     return {"error": "No status provided"}
+
+@router.patch("/reports/{report_id}/archive")
+def archive_report(report_id: str):
+    db = SessionLocal()
+    report = db.query(models.Report).filter(models.Report.id == report_id).first()
+    if not report:
+        return {"error": "Report not found"}
+    
+    from datetime import datetime
+    report.archived = "true"
+    report.archived_at = datetime.utcnow()
+    db.commit()
+    return {"ok": True, "archived": True}
