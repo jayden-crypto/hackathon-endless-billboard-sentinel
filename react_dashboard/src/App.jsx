@@ -63,10 +63,13 @@ export default function App() {
       let apiReports = [];
       if (!IS_GITHUB_PAGES) {
         try {
+          console.log('Fetching reports from:', `${API_BASE}/reports`);
           const response = await fetch(`${API_BASE}/reports`);
+          console.log('Response status:', response.status);
           if (response.ok) {
             apiReports = await response.json();
-            console.log('Loaded reports from API:', apiReports);
+            console.log('Raw API response:', apiReports);
+            console.log('Number of reports received:', apiReports.length);
             
             // Transform API data to match frontend expectations
             apiReports = apiReports.map(report => {
@@ -96,12 +99,17 @@ export default function App() {
                 archived_at: report.archived_at
               };
             });
+            console.log('Transformed reports:', apiReports);
+          } else {
+            console.log('API response not ok:', response.status, response.statusText);
           }
         } catch (error) {
+          console.log('API fetch error:', error.message);
           console.log('Using mock data - API not available:', error.message);
         }
       }
 
+      console.log('Final apiReports count:', apiReports.length);
       // If no API data or on GitHub Pages, use mock data
       if (apiReports.length === 0) {
         apiReports = [
@@ -135,15 +143,13 @@ export default function App() {
         ];
       }
 
+      console.log('Setting reports state with:', apiReports);
       setReports(apiReports);
       updateStats(apiReports);
-      setLoading(false);
-      
-      showNotificationMessage('Dashboard loaded successfully!');
     } catch (error) {
       console.error('Error loading dashboard:', error);
+    } finally {
       setLoading(false);
-      showNotificationMessage('Error loading dashboard', 'error');
     }
   };
 
