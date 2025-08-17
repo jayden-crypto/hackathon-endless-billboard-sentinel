@@ -339,39 +339,66 @@ export default function UserReport() {
     setIsSubmitting(true);
     
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('image', capturedImage.blob, 'billboard-detection.jpg');
-      formData.append('description', reportData.description);
-      formData.append('location', reportData.location);
-      formData.append('urgency', reportData.urgency);
-      formData.append('timestamp', new Date().toISOString());
+      // Check if we're on GitHub Pages or localhost
+      const isGitHubPages = window.location.hostname.includes('github.io');
       
-      // Simulate API call (replace with your actual endpoint)
-      const response = await fetch('http://localhost:8000/api/reports', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        setShowSuccess(true);
-        // Reset form
-        setCapturedImage(null);
-        setReportData({
-          description: '',
-          location: '',
-          urgency: 'medium',
-          consent: false
+      if (isGitHubPages) {
+        // Mock submission for GitHub Pages
+        console.log('Mock submission for GitHub Pages:', {
+          image: capturedImage.blob.name || 'billboard-photo.jpg',
+          description: reportData.description,
+          location: reportData.location,
+          urgency: reportData.urgency,
+          timestamp: new Date().toISOString()
         });
         
-        // Hide success message after 3 seconds
-        setTimeout(() => setShowSuccess(false), 3000);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Always succeed on GitHub Pages
+        setShowSuccess(true);
+        setPhotoCaptured(true);
+        
       } else {
-        throw new Error('Failed to submit report');
+        // Real API call for localhost
+        const formData = new FormData();
+        formData.append('image', capturedImage.blob, 'billboard-detection.jpg');
+        formData.append('description', reportData.description);
+        formData.append('location', reportData.location);
+        formData.append('urgency', reportData.urgency);
+        formData.append('timestamp', new Date().toISOString());
+        
+        const response = await fetch('http://localhost:8000/api/reports', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          setShowSuccess(true);
+          setPhotoCaptured(true);
+        } else {
+          throw new Error('Failed to submit report to backend');
+        }
       }
+      
+      // Reset form on success
+      setCapturedImage(null);
+      setReportData({
+        description: '',
+        location: '',
+        urgency: 'medium',
+        consent: false
+      });
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+        setPhotoCaptured(false);
+      }, 5000);
+      
     } catch (error) {
       console.error('Error submitting report:', error);
-      alert('Failed to submit report. Please try again.');
+      alert(`Failed to submit report: ${error.message}. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
