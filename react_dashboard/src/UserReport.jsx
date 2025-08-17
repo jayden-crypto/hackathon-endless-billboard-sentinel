@@ -445,21 +445,13 @@ PlaysInline: ${debugInfo.playsInline}`);
     }
   };
 
-  // Main photo button handler - tries camera first, falls back to file input
-  const handleTakePhoto = async () => {
-    try {
-      console.log('=== TAKE PHOTO BUTTON PRESSED ===');
-      
-      // First try to open camera
-      await openCamera();
-      
-    } catch (error) {
-      console.log('Camera failed, falling back to file input:', error);
-      
-      // If camera fails, trigger file input instead
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
-      }
+  // Main photo button handler - use file input directly (most reliable on mobile)
+  const handleTakePhoto = () => {
+    console.log('=== TAKE PHOTO BUTTON PRESSED ===');
+    
+    // Directly trigger file input with camera capture
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -597,14 +589,13 @@ PlaysInline: ${debugInfo.playsInline}`);
         {!capturedImage && (
           <div className="photo-button-section">
             <button 
-              className={`btn btn-primary photo-btn ${isLoadingCamera ? 'loading' : ''}`} 
+              className="btn btn-primary photo-btn"
               onClick={handleTakePhoto}
-              disabled={isLoadingCamera}
             >
-              {isLoadingCamera ? '📸 Loading Camera...' : '📸 Take Photo of Billboard'}
+              📸 Take Photo of Billboard
             </button>
             
-            {/* Hidden file input for fallback */}
+            {/* Hidden file input that opens camera */}
             <input
               ref={fileInputRef}
               type="file"
@@ -614,45 +605,26 @@ PlaysInline: ${debugInfo.playsInline}`);
               style={{ display: 'none' }}
             />
             
-            {cameraError && (
-              <div className="camera-error-info">
-                <p className="error-text">❌ {cameraError}</p>
-                <button 
-                  className="btn btn-secondary retry-btn" 
-                  onClick={() => openCamera()}
-                  style={{ marginTop: '5px' }}
-                >
-                  🔄 Retry Camera
-                </button>
-              </div>
-            )}
+            <div style={{ marginTop: '10px' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => openCamera()}
+                style={{ fontSize: '0.8rem', marginRight: '10px' }}
+              >
+                🎥 Try Video Camera
+              </button>
+              
+              <button 
+                className="btn btn-secondary debug-btn" 
+                onClick={debugCamera}
+                style={{ fontSize: '0.8rem' }}
+              >
+                🔍 Debug
+              </button>
+            </div>
             
-            {!cameraError && !cameraInitialized && (
-              <p className="camera-status">⏳ Camera initializing...</p>
-            )}
-            
-            {cameraInitialized && !cameraError && (
-              <p className="camera-status">✅ Camera ready!</p>
-            )}
-            
-            <button 
-              className="btn btn-secondary debug-btn" 
-              onClick={debugCamera}
-              style={{ marginTop: '10px', fontSize: '0.8rem' }}
-            >
-              🔍 Debug Camera
-            </button>
-            
-            <button 
-              className="btn btn-warning" 
-              onClick={trySimpleCamera}
-              style={{ marginTop: '10px', fontSize: '0.8rem', marginLeft: '10px' }}
-            >
-              🎥 Try Simple Camera
-            </button>
-            
-            <p className="photo-hint">Take a clear photo showing the unauthorized billboard</p>
-            <p className="photo-hint">Make sure to allow camera permissions when prompted</p>
+            <p className="photo-hint">📱 On mobile: Button opens camera directly</p>
+            <p className="photo-hint">💻 On desktop: Choose file or try video camera</p>
           </div>
         )}
 
