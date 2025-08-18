@@ -346,12 +346,13 @@ export default function UserReport() {
         // Store report in localStorage for GitHub Pages
         const newReport = {
           id: Date.now().toString(),
-          location: `Location ${Date.now().toString().slice(-8)}`,
+          location: reportData.location || `Location ${Date.now().toString().slice(-8)}`,
           coordinates: [30.354 + Math.random() * 0.01, 76.366 + Math.random() * 0.01],
           status: "Pending Review",
           timestamp: new Date().toISOString(),
           detections: ["Billboard", "No License"],
           image: capturedImage.dataUrl,
+          description: reportData.description,
           archived: "false",
           archived_at: null
         };

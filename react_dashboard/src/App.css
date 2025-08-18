@@ -675,6 +675,17 @@ body {
   color: white;
 }
 
+/* Report Description Styling */
+.report-description {
+  font-size: 0.85rem;
+  color: #4a5568;
+  margin: 8px 0;
+  line-height: 1.4;
+  max-height: 2.8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Archived Reports Styling */
 .archived-badge {
   font-size: 0.7rem;

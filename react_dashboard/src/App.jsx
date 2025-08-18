@@ -432,6 +432,9 @@ export default function App() {
                     {report.location}
                     {report.archived === 'true' && <span className="archived-badge">📁 Archived</span>}
                   </h3>
+                  {report.description && (
+                    <p className="report-description">{report.description}</p>
+                  )}
                   <p className="timestamp">{new Date(report.timestamp).toLocaleString()}</p>
                   <div className="detections">
                     {report.detections.map((detection, idx) => (
@@ -462,6 +465,9 @@ export default function App() {
               </div>
               <div className="detail-info">
                 <h3>{selectedReport.location}</h3>
+                {selectedReport.description && (
+                  <p><strong>Description:</strong> {selectedReport.description}</p>
+                )}
                 <p><strong>Status:</strong> 
                   <span 
                     className="status-text"
