@@ -303,13 +303,45 @@ export default function UserReport() {
     }
   };
 
+  const reverseGeocode = async (lat, lon) => {
+    try {
+      // Use OpenStreetMap Nominatim API (free, no API key required)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=16&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      if (data && data.display_name) {
+        // Extract meaningful location parts
+        const address = data.address || {};
+        const parts = [];
+        
+        if (address.road) parts.push(address.road);
+        if (address.neighbourhood) parts.push(address.neighbourhood);
+        if (address.suburb) parts.push(address.suburb);
+        if (address.city || address.town || address.village) {
+          parts.push(address.city || address.town || address.village);
+        }
+        
+        return parts.length > 0 ? parts.join(', ') : data.display_name.split(',').slice(0, 3).join(',');
+      }
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error);
+    }
+    return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+  };
+
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const locationName = await reverseGeocode(lat, lon);
+          
           setReportData(prev => ({
             ...prev,
-            location: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`
+            location: locationName
           }));
         },
         (error) => {
@@ -343,11 +375,30 @@ export default function UserReport() {
       const isGitHubPages = window.location.hostname.includes('github.io');
       
       if (isGitHubPages) {
+        // Parse coordinates from location if available
+        let lat = 30.354 + Math.random() * 0.01;
+        let lon = 76.366 + Math.random() * 0.01;
+        let locationName = reportData.location;
+        
+        if (reportData.location && reportData.location.includes(',')) {
+          const coords = reportData.location.split(',').map(c => parseFloat(c.trim()));
+          if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+            lat = coords[0];
+            lon = coords[1];
+            // Try to get readable name for coordinates
+            try {
+              locationName = await reverseGeocode(lat, lon);
+            } catch (e) {
+              locationName = reportData.location;
+            }
+          }
+        }
+        
         // Store report in localStorage for GitHub Pages
         const newReport = {
           id: Date.now().toString(),
-          location: reportData.location || `Location ${Date.now().toString().slice(-8)}`,
-          coordinates: [30.354 + Math.random() * 0.01, 76.366 + Math.random() * 0.01],
+          location: locationName || `Location ${Date.now().toString().slice(-8)}`,
+          coordinates: [lat, lon],
           status: "Pending Review",
           timestamp: new Date().toISOString(),
           detections: ["Billboard", "No License"],
