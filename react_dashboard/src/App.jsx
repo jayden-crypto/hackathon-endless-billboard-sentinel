@@ -110,37 +110,21 @@ export default function App() {
       }
 
       console.log('Final apiReports count:', apiReports.length);
-      // If no API data or on GitHub Pages, use mock data
+      // If no API data or on GitHub Pages, start with empty data
       if (apiReports.length === 0) {
-        apiReports = [
-          {
-            id: 1,
-            location: "Downtown Area",
-            coordinates: [30.354, 76.366],
-            status: "Pending Review",
-            timestamp: "2024-01-15T10:30:00Z",
-            detections: ["Billboard", "Unauthorized"],
-            image: "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Detection"
-          },
-          {
-            id: 2,
-            location: "Highway Exit",
-            coordinates: [30.358, 76.370],
-            status: "Under Investigation",
-            timestamp: "2024-01-15T09:15:00Z",
-            detections: ["Billboard", "Safety Hazard"],
-            image: "https://via.placeholder.com/300x200/FF9800/FFFFFF?text=Safety+Hazard"
-          },
-          {
-            id: 3,
-            location: "Residential Zone",
-            coordinates: [30.350, 76.362],
-            status: "Resolved",
-            timestamp: "2024-01-14T16:45:00Z",
-            detections: ["Billboard", "Removed"],
-            image: "https://via.placeholder.com/300x200/2196F3/FFFFFF?text=Resolved+Case"
+        // Check localStorage for submitted reports on GitHub Pages
+        const storedReports = localStorage.getItem('githubPageReports');
+        if (storedReports) {
+          try {
+            apiReports = JSON.parse(storedReports);
+            console.log('Loaded reports from localStorage:', apiReports);
+          } catch (e) {
+            console.log('Error parsing stored reports:', e);
+            apiReports = [];
           }
-        ];
+        } else {
+          apiReports = [];
+        }
       }
 
       console.log('Setting reports state with:', apiReports);

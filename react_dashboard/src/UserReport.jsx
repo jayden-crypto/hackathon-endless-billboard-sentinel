@@ -343,21 +343,36 @@ export default function UserReport() {
       const isGitHubPages = window.location.hostname.includes('github.io');
       
       if (isGitHubPages) {
-        // Mock submission for GitHub Pages
-        console.log('Mock submission for GitHub Pages:', {
-          image: capturedImage.blob.name || 'billboard-photo.jpg',
-          description: reportData.description,
-          location: reportData.location,
-          urgency: reportData.urgency,
-          timestamp: new Date().toISOString()
-        });
+        // Store report in localStorage for GitHub Pages
+        const newReport = {
+          id: Date.now().toString(),
+          location: `Location ${Date.now().toString().slice(-8)}`,
+          coordinates: [30.354 + Math.random() * 0.01, 76.366 + Math.random() * 0.01],
+          status: "Pending Review",
+          timestamp: new Date().toISOString(),
+          detections: ["Billboard", "No License"],
+          image: capturedImage.dataUrl,
+          archived: "false",
+          archived_at: null
+        };
+        
+        // Get existing reports from localStorage
+        const existingReports = JSON.parse(localStorage.getItem('githubPageReports') || '[]');
+        existingReports.unshift(newReport); // Add to beginning
+        localStorage.setItem('githubPageReports', JSON.stringify(existingReports));
+        
+        console.log('Report stored in localStorage:', newReport);
         
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Always succeed on GitHub Pages
         setShowSuccess(true);
         setPhotoCaptured(true);
+        
+        // Notify parent to refresh dashboard
+        if (window.refreshDashboard) {
+          window.refreshDashboard();
+        }
         
       } else {
         // Real API call for localhost - format data for backend API
