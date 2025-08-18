@@ -419,7 +419,14 @@ export default function App() {
                 onClick={() => setSelectedReport(report)}
               >
                 <div className="report-image">
-                  <img src={report.image} alt="Detection" />
+                  <img 
+                    src={report.image} 
+                    alt="Detection"
+                    onError={(e) => {
+                      console.log('Image failed to load:', report.image);
+                      e.target.src = "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Photo";
+                    }}
+                  />
                   <div 
                     className="status-badge"
                     style={{ backgroundColor: getStatusColor(report.status) }}
@@ -461,7 +468,14 @@ export default function App() {
             </div>
             <div className="panel-content">
               <div className="detail-image">
-                <img src={selectedReport.image} alt="Detection" />
+                <img 
+                  src={selectedReport.image} 
+                  alt="Detection"
+                  onError={(e) => {
+                    console.log('Detail image failed to load:', selectedReport.image);
+                    e.target.src = "https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Billboard+Photo";
+                  }}
+                />
               </div>
               <div className="detail-info">
                 <h3>{selectedReport.location}</h3>
