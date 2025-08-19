@@ -270,16 +270,23 @@ export default function UserReport() {
           // This ensures the captured image is not mirrored
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           
-          // Convert to blob with high quality
+          // Convert to data URL for localStorage compatibility
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compressed for storage
+          console.log('Photo captured successfully!');
+          console.log('Data URL length:', dataUrl.length);
+          console.log('Image dimensions:', canvas.width, 'x', canvas.height);
+          
+          // Also create blob for form submission
           canvas.toBlob((blob) => {
             if (blob) {
-              const imageUrl = URL.createObjectURL(blob);
-              console.log('Photo captured successfully! Blob size:', blob.size, 'bytes');
-              console.log('Image URL:', imageUrl);
-              console.log('Image dimensions:', canvas.width, 'x', canvas.height);
+              const blobUrl = URL.createObjectURL(blob);
               
-              // Set the captured image before closing camera
-              setCapturedImage({ blob, url: imageUrl });
+              // Set both data URL and blob
+              setCapturedImage({ 
+                blob, 
+                url: blobUrl,
+                dataUrl: dataUrl 
+              });
               
               // Close camera after setting the image
               setTimeout(() => {
@@ -289,7 +296,7 @@ export default function UserReport() {
               console.error('Failed to create blob from canvas');
               alert('Failed to capture photo. Please try again.');
             }
-          }, 'image/jpeg', 0.9); // Higher quality JPEG
+          }, 'image/jpeg', 0.7);
         } catch (error) {
           console.error('Error capturing photo:', error);
           alert('Error capturing photo. Please try again.');
@@ -414,6 +421,7 @@ export default function UserReport() {
         localStorage.setItem('githubPageReports', JSON.stringify(existingReports));
         
         console.log('Report stored in localStorage:', newReport);
+        console.log('Image data URL length:', newReport.image ? newReport.image.length : 'No image');
         
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -557,16 +565,26 @@ PlaysInline: ${debugInfo.playsInline}`);
     } else {
       console.log('No stream reference');
       alert('No stream reference found');
-    }
-  };
-
-  // Handle file upload from hidden input
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setCapturedImage({ blob: file, url: url });
-      setPhotoCaptured(true);
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        console.log('File selected:', file.name, file.size, 'bytes');
+        
+        // Create both blob URL and data URL
+        const imageUrl = URL.createObjectURL(file);
+        
+        // Convert file to data URL for localStorage
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          setCapturedImage({ 
+            blob: file, 
+            url: imageUrl,
+            dataUrl: dataUrl 
+          });
+          setPhotoCaptured(true);
+        };
+        reader.readAsDataURL(file);
+      }
       console.log('Photo uploaded via file input');
     }
   };
