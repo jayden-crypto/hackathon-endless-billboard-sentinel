@@ -638,6 +638,32 @@ PlaysInline: ${debugInfo.playsInline}`);
     }
   };
 
+  // Handle file upload from input
+  const handleFileUpload = (e) => {
+    const fileInput = e.target;
+    if (fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      console.log('File selected:', file.name, file.size, 'bytes');
+      
+      // Create both blob URL and data URL
+      const imageUrl = URL.createObjectURL(file);
+      
+      // Convert file to data URL for localStorage
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        setCapturedImage({ 
+          blob: file, 
+          url: imageUrl,
+          dataUrl: dataUrl 
+        });
+        setPhotoCaptured(true);
+      };
+      reader.readAsDataURL(file);
+    }
+    console.log('Photo uploaded via file input');
+  };
+
   // Add debugging for capturedImage state
   useEffect(() => {
     console.log('capturedImage state changed:', capturedImage);
