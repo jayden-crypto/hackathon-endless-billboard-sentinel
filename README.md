@@ -49,8 +49,8 @@ A modern civic reporting platform for detecting and reporting unauthorized billb
 ### Local Development
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/billboard-sentinel.git
-cd billboard-sentinel
+git clone https://github.com/jayden-crypto/hackathon-billboard-sentinel.git
+cd hackathon-billboard-sentinel
 
 # Frontend
 cd react_dashboard
@@ -165,8 +165,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/YOUR_USERNAME/billboard-sentinel/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/YOUR_USERNAME/billboard-sentinel/discussions)
+- **Issues:** [GitHub Issues](https://github.com/jayden-crypto/hackathon-billboard-sentinel/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/jayden-crypto/hackathon-billboard-sentinel/discussions)
 - **Email:** [Your Email]
 
 ---
