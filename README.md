@@ -13,8 +13,8 @@ A modern civic reporting platform for detecting and reporting unauthorized billb
 
 ## 🚀 Live Demo
 
-**Frontend Dashboard:** [Your GitHub Pages URL will go here]
-**Backend API:** [Your deployed backend URL will go here]
+**Frontend Dashboard:** https://jayden-crypto.github.io/hackathon-billboard-sentinel/
+**Backend API:** [Deploy to Railway for live backend]
 
 ## 🛠️ Tech Stack
 
