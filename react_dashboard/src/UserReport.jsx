@@ -1,6 +1,56 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './UserReport.css';
-import { safeStorage, downscaleImage } from './utils/safeStorage';
+
+// Safe storage utility inline to avoid import issues
+const safeStorage = {
+  get(key) {
+    try { 
+      return window.localStorage.getItem(key); 
+    } catch { 
+      return null; 
+    }
+  },
+  set(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      console.warn('Storage unavailable or quota exceeded', e);
+      return false;
+    }
+  },
+  remove(key) {
+    try { 
+      window.localStorage.removeItem(key); 
+    } catch {}
+  }
+};
+
+// Image downscaling utility inline
+async function downscaleImage(file, maxDim = 1280, quality = 0.8) {
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = rej;
+      i.src = URL.createObjectURL(file);
+    });
+
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+
+    const ctx = canvas.getContext('2d', { alpha: false });
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+    return new File([blob], (file.name || 'photo') + '.jpg', { type: 'image/jpeg' });
+  } catch (error) {
+    console.warn('Image downscaling failed, using original:', error);
+    return file;
+  }
+}
 
 export default function UserReport() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
