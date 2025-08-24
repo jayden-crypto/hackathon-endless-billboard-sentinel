@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './UserReport.css';
+import { safeStorage, downscaleImage } from './utils/safeStorage';
 
 export default function UserReport() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [imageInMemory, setImageInMemory] = useState(null); // Keep image preview in memory only
   const [isLoadingCamera, setIsLoadingCamera] = useState(false);
   const [reportData, setReportData] = useState({
     description: '',
@@ -270,28 +272,38 @@ export default function UserReport() {
           // This ensures the captured image is not mirrored
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           
-          // Convert to data URL for localStorage compatibility
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compressed for storage
-          console.log('Photo captured successfully!');
-          console.log('Data URL length:', dataUrl.length);
-          console.log('Image dimensions:', canvas.width, 'x', canvas.height);
-          
-          // Also create blob for form submission
-          canvas.toBlob((blob) => {
+          // Create blob for form submission (no localStorage storage)
+          canvas.toBlob(async (blob) => {
             if (blob) {
-              const blobUrl = URL.createObjectURL(blob);
-              
-              // Set both data URL and blob
-              setCapturedImage({ 
-                blob, 
-                url: blobUrl,
-                dataUrl: dataUrl 
-              });
-              
-              // Close camera after setting the image
-              setTimeout(() => {
-                closeCamera();
-              }, 100);
+              try {
+                // Downscale image to reduce size
+                const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+                const downscaledFile = await downscaleImage(file, 1280, 0.8);
+                
+                const blobUrl = URL.createObjectURL(downscaledFile);
+                
+                // Keep image in memory only, avoid localStorage
+                setCapturedImage({ 
+                  blob: downscaledFile, 
+                  url: blobUrl
+                });
+                setImageInMemory(blobUrl);
+                
+                console.log('Photo captured and downscaled successfully!');
+                console.log('Original size:', blob.size, 'Downscaled size:', downscaledFile.size);
+                
+                // Close camera after setting the image
+                setTimeout(() => {
+                  closeCamera();
+                }, 100);
+              } catch (error) {
+                console.error('Error processing image:', error);
+                // Fallback to original blob if downscaling fails
+                const blobUrl = URL.createObjectURL(blob);
+                setCapturedImage({ blob, url: blobUrl });
+                setImageInMemory(blobUrl);
+                setTimeout(() => closeCamera(), 100);
+              }
             } else {
               console.error('Failed to create blob from canvas');
               alert('Failed to capture photo. Please try again.');
@@ -401,7 +413,7 @@ export default function UserReport() {
           }
         }
         
-        // Store report in localStorage for GitHub Pages
+        // Create report data without storing large image in localStorage
         const newReport = {
           id: Date.now().toString(),
           location: locationName || `Location ${Date.now().toString().slice(-8)}`,
@@ -409,19 +421,26 @@ export default function UserReport() {
           status: "Pending Review",
           timestamp: new Date().toISOString(),
           detections: ["Billboard", "No License"],
-          image: capturedImage.dataUrl,
+          image: null, // Don't store image data to avoid quota issues
           description: reportData.description,
           archived: "false",
           archived_at: null
         };
         
-        // Get existing reports from localStorage
-        const existingReports = JSON.parse(localStorage.getItem('githubPageReports') || '[]');
-        existingReports.unshift(newReport); // Add to beginning
-        localStorage.setItem('githubPageReports', JSON.stringify(existingReports));
+        // Try to store report safely without image data
+        try {
+          const existingReports = JSON.parse(safeStorage.get('githubPageReports') || '[]');
+          existingReports.unshift(newReport);
+          const success = safeStorage.set('githubPageReports', JSON.stringify(existingReports));
+          if (!success) {
+            console.warn('Could not store report in localStorage due to quota limits');
+          }
+        } catch (error) {
+          console.warn('Failed to store report:', error);
+        }
         
-        console.log('Report stored in localStorage:', newReport);
-        console.log('Image data URL length:', newReport.image ? newReport.image.length : 'No image');
+        console.log('Report processed for GitHub Pages:', newReport);
+        console.log('Image stored in memory only to avoid quota issues');
         
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -505,7 +524,16 @@ export default function UserReport() {
       
     } catch (error) {
       console.error('Error submitting report:', error);
-      alert(`Failed to submit report: ${error.message}. Please try again.`);
+      
+      // Provide user-friendly error messages for common issues
+      let errorMessage = error.message;
+      if (error.message.includes('quota') || error.message.includes('storage')) {
+        errorMessage = 'Storage limit reached. Try using a different browser or clearing website data.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      alert(`Failed to submit report: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -639,27 +667,37 @@ PlaysInline: ${debugInfo.playsInline}`);
   };
 
   // Handle file upload from input
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const fileInput = e.target;
     if (fileInput.files && fileInput.files[0]) {
       const file = fileInput.files[0];
       console.log('File selected:', file.name, file.size, 'bytes');
       
-      // Create both blob URL and data URL
-      const imageUrl = URL.createObjectURL(file);
-      
-      // Convert file to data URL for localStorage
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target.result;
+      try {
+        // Process file with downscaling to avoid quota issues
+        const downscaledFile = await downscaleImage(file, 1280, 0.8);
+        const processedUrl = URL.createObjectURL(downscaledFile);
+        
         setCapturedImage({ 
-          blob: file, 
-          url: imageUrl,
-          dataUrl: dataUrl 
+          blob: downscaledFile, 
+          url: processedUrl
         });
+        setImageInMemory(processedUrl);
         setPhotoCaptured(true);
-      };
-      reader.readAsDataURL(file);
+        
+        console.log('File uploaded and processed:', {
+          original: file.size,
+          processed: downscaledFile.size,
+          reduction: Math.round((1 - downscaledFile.size / file.size) * 100) + '%'
+        });
+      } catch (error) {
+        console.error('Error processing uploaded file:', error);
+        // Fallback to original file
+        const imageUrl = URL.createObjectURL(file);
+        setCapturedImage({ blob: file, url: imageUrl });
+        setImageInMemory(imageUrl);
+        setPhotoCaptured(true);
+      }
     }
     console.log('Photo uploaded via file input');
   };
