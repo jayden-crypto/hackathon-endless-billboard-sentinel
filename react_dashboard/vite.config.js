@@ -11,5 +11,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true
-  }
+  },
+  base: '/hackathon-endless-billboard-sentinel/'
 })
